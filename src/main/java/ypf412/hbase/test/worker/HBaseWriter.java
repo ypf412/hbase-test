@@ -182,7 +182,7 @@ public class HBaseWriter {
 		}
 
 		private byte[] getRowKeyForPut(int shardNum, File file, int lineNum) {
-			byte[] bShard = Bytes.toBytes(shardNum);
+			byte[] bShard = { (byte)shardNum };
 			byte[] bFile = Bytes.toBytes(file.getAbsolutePath());
 			byte[] bLine = Bytes.toBytes(lineNum);
 			byte[] rowKey = Bytes.add(bShard, bFile, bLine);

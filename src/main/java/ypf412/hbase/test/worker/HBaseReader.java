@@ -140,8 +140,10 @@ public class HBaseReader {
 			Scan scan = new Scan();
 			scan.addFamily(Bytes.toBytes(columnFamily));
 			scan.setCaching(0);
-			byte[] startRow = Bytes.add(Bytes.toBytes(shardNum), Bytes.toBytes(file.getAbsolutePath()));
-			byte[] stopRow = Bytes.toBytes(shardNum + 1);
+			byte[] bShard = { (byte)shardNum };
+			byte[] startRow = Bytes.add(bShard, Bytes.toBytes(file.getAbsolutePath()));
+			byte[] bShardN = { (byte)(shardNum + 1) };
+			byte[] stopRow = bShardN;
 			scan.setStartRow(startRow);
 			scan.setStopRow(stopRow);
 			ResultScanner rs = null;
@@ -167,7 +169,7 @@ public class HBaseReader {
 
 		private byte[] getRowKeyForGet(int shardNum, File file) {
 			int lineNum = rand.nextInt();
-			byte[] bShard = Bytes.toBytes(shardNum);
+			byte[] bShard = { (byte)shardNum };
 			byte[] bFile = Bytes.toBytes(file.getAbsolutePath());
 			byte[] bLine = Bytes.toBytes(lineNum);
 			byte[] rowKey = Bytes.add(bShard, bFile, bLine);
