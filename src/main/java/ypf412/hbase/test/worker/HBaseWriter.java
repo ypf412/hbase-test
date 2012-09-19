@@ -20,7 +20,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import ypf412.hbase.test.worker.Constants.Write;
 
 /**
- * HBase Test Writer Class: Single Column Qualifier || Multiple Column Qualifiers
+ * HBase Test Writer Class: PUT_TO_SINGLE_COLUMN || PUT_TO_MULTIPLE_COLUMNS
  * 
  * @author jiuling.ypf
  * 
@@ -81,9 +81,12 @@ public class HBaseWriter {
 	public void startWorkers() {
 		LOG.info("---------- HBase writer begin to work ----------");
 		CountDownLatch countDownLatch = new CountDownLatch(threadNum);
+		Counter[] counter = new Counter[threadNum];
+		for (int shard = 0; shard < threadNum; shard++)
+			counter[shard] = new Counter();
 		try {
 			for (int shard = 0; shard < threadNum; shard++) {
-				Thread shardThread = new Thread(new ShardWrite(shard, countDownLatch));
+				Thread shardThread = new Thread(new ShardWrite(shard, countDownLatch, counter[shard]));
 				shardThread.setDaemon(true);
 				shardThread.start();
 			}
@@ -96,8 +99,33 @@ public class HBaseWriter {
 		} catch (InterruptedException e) {
 			LOG.error("worker thread is interrupted", e);
 		}
-		Counter.printStat();
+		
+		printStat(counter);
+		
 		LOG.info("---------- HBase writer finish to work ----------");
+	}
+	
+	private void printStat(Counter[] counter) {
+		Counter result = new Counter();
+		for (int shard = 0; shard < threadNum; shard++) {
+			counter[shard].printStat();
+			result.countA += counter[shard].countA;
+			result.countB += counter[shard].countB;
+			result.countC += counter[shard].countC;
+			result.countD += counter[shard].countD;
+			result.countE += counter[shard].countE;
+			result.totalRecord += counter[shard].totalRecord;
+			result.totalTime += counter[shard].totalTime;
+			result.totalKeyLen += counter[shard].totalKeyLen;
+			result.totalValLen += counter[shard].totalValLen;
+			result.totalFieldNum += counter[shard].totalFieldNum;
+			result.countSuccess += counter[shard].countSuccess;
+			result.countFailure += counter[shard].countFailure;
+		}
+		
+		LOG.info("----------------------- stat report of all threads ---------------------------------");
+		result.printStat();
+		LOG.info("----------------------- stat report of all threads ---------------------------------");
 	}
 	
 	/**
@@ -109,12 +137,14 @@ public class HBaseWriter {
 		
 		private int shardNum;
 		private CountDownLatch countDownLatch;
+		private Counter counter;
 		private List<File> fileList;
 
 
-		public ShardWrite(int shardNum, CountDownLatch countDownLatch) throws Exception {
+		public ShardWrite(int shardNum, CountDownLatch countDownLatch, Counter counter) throws Exception {
 			this.shardNum = shardNum;
 			this.countDownLatch = countDownLatch;
+			this.counter = counter;
 			this.fileList = loadFiles();
 		}
 
@@ -142,11 +172,11 @@ public class HBaseWriter {
 						continue;
 					
 					byte[] rowKey = getRowKeyForPut(shardNum, file, lineNum);
-					Counter.addDataLen(rowKey.length, Bytes.toBytes(line).length);
+					counter.addDataLen(rowKey.length, Bytes.toBytes(line).length);
 					Put put = null;
-					if (writeType == Write.SINGLE_COLUMN) {
+					if (writeType == Write.PUT_TO_SINGLE_COLUMN) {
 						put = getPutForSingleColumn(rowKey, line);
-					} else if (writeType == Write.MULTIPLE_COLUMNS) {
+					} else if (writeType == Write.PUT_TO_MULTIPLE_COLUMNS) {
 						put = getPutForMultipleColumns(rowKey, line);
 					}
 					writeToHBaseDB(put);
@@ -190,14 +220,16 @@ public class HBaseWriter {
 		}
 
 		private Put getPutForSingleColumn(byte[] rowKey, String line) {
+			counter.addFieldNum(1);
 			Put put = new Put(rowKey);
 			put.add(Bytes.toBytes(columnFamily), Bytes.toBytes("col"), Bytes.toBytes(line));
 			return put;
 		}
 
 		private Put getPutForMultipleColumns(byte[] rowKey, String line) {
-			Put put = new Put(rowKey);
 			String[] data = line.split(fieldSpliter);
+			counter.addFieldNum(data.length);
+			Put put = new Put(rowKey);
 			for (int i = 0; i < data.length; i++) {
 				put.add(Bytes.toBytes(columnFamily), Bytes.toBytes("col" + i), Bytes.toBytes(data[i]));
 			}
@@ -208,9 +240,9 @@ public class HBaseWriter {
 			long start = System.currentTimeMillis();
 			try {
 				hTables[shardNum].put(put);
-				Counter.addSuccess((System.currentTimeMillis() - start));
+				counter.addSuccess((System.currentTimeMillis() - start));
 			} catch (IOException e) {
-				Counter.addFailure((System.currentTimeMillis() - start));
+				counter.addFailure((System.currentTimeMillis() - start));
 			}
 		}
 		
@@ -221,84 +253,94 @@ public class HBaseWriter {
 	 * @author jiuling.ypf
 	 *
 	 */
-	static class Counter{
+	class Counter{
 		// process record number
-		private static long recordNum;
+		public long totalRecord;
 		
 		// process total time
-		private static long totalTime;
+		public long totalTime;
+
+		// total key length
+		public long totalKeyLen;
 		
-		private static long totalKeyLen;
+		// total value length
+		public long totalValLen;
 		
-		private static long totalValLen;
+		// total field number
+		public long totalFieldNum;
 		
 		// < 1 ms
-		private static long countA;
+		public long countA;
 		
 		// 1 ~ 2ms
-		private static long countB;
+		public long countB;
 		
 		// 2 ~ 10 ms 
-		private static long countC;
+		public long countC;
 		
 		// 10 ~ 20 ms
-		private static long countD;
+		public long countD;
 		
 		// > 20 ms
-		private static long countE;
+		public long countE;
 		
 		// success count
-		private static long countSucess;
+		public long countSuccess;
 		
 		// failure count
-		private static long countFailure;
+		public long countFailure;
 		
-		private static synchronized void count(long t) {
-			recordNum++;
+		private void count(long t) {
+			totalRecord++;
 			totalTime += t;
 			
-			if(t < 1){
+			if(t < 1) {
 				countA++;
 			}
-			else if(t < 2){
+			else if(t < 2) {
 				countB++;
 			}
-			else if(t< 10){
+			else if(t < 10) {
 				countC++;
 			}
-			else if(t<20){
+			else if(t < 20) {
 				countD++;
 			}
-			else{
+			else {
 				countE++;
 			}
 		}
 		
-		public static synchronized void addSuccess(long t) {
+		public void addSuccess(long t) {
 			count(t);
-			countSucess++;
+			countSuccess++;
 		}
 		
-		public static synchronized void addFailure(long t) {
+		public void addFailure(long t) {
 			count(t);
 			countFailure++;
 		}
 		
-		public static void addDataLen(int keyLen, int valLen) {
+		public void addDataLen(int keyLen, int valLen) {
 			totalKeyLen += keyLen;
 			totalValLen += valLen;
 		}
 		
+		public void addFieldNum(int fieldNum) {
+			totalFieldNum += fieldNum;
+		}
+		
 		// print statistic log
-		public static void printStat(){
+		public void printStat(){
 			System.out.println("----------------------- stat report ---------------------------------");
-			System.out.println("totalLine = " + recordNum + ", totalTime = " + totalTime);
-			System.out.println("countSucess = " + countSucess + ", countFailure = " + countFailure);
+			System.out.println("totalRecord = " + totalRecord + ", totalTime = " + totalTime);
+			System.out.println("countSuccess = " + countSuccess + ", countFailure = " + countFailure);
 			System.out.println("totalKeyLen = " + totalKeyLen + ", totalValLen = " + totalValLen);
-			if(recordNum != 0) {
-				System.out.println("average time per line = " + (totalTime / recordNum));
-				System.out.println("average len per key = " + (totalKeyLen / recordNum));
-				System.out.println("average len per val = " + (totalValLen / recordNum));
+			if(totalRecord != 0) {
+				System.out.println("average time per line = " + (totalTime / totalRecord));
+				System.out.println("average len per key = " + (totalKeyLen / totalRecord));
+				System.out.println("average len per val = " + (totalValLen / totalRecord));
+				System.out.println("average field per line = " + (totalFieldNum / totalRecord));
 			}
 			System.out.println("< 1ms = " + countA + ", 1~2 ms = " + countB
 					+ ", 2~10 ms = " + countC + ", 10~20ms = " + countD + ", > 20ms = " + countE);
@@ -312,7 +354,7 @@ public class HBaseWriter {
 	public static void main(String args[]) {
 		if (args.length != 6) {
 			System.err
-					.println("Usage: ypf412.hbase.test.worker.HBaseWriter [dataDir] [fieldSpliter] [threadNum] [tableName] [columnFamily] [writeType(single|multiple)]");
+					.println("Usage: ypf412.hbase.test.worker.HBaseWriter [dataDir] [fieldSpliter] [threadNum] [tableName] [columnFamily] [writeType(put_to_single_column|put_to_multiple_columns)]");
 			System.exit(1);
 		}
 		String dataDir = args[0];
@@ -320,11 +362,11 @@ public class HBaseWriter {
 		int threadNum = Integer.parseInt(args[2]);
 		String tableName = args[3];
 		String columnFamily = args[4];
-		Write writeType = Write.SINGLE_COLUMN;
-		if (args[5].equalsIgnoreCase("single"))
-			writeType = Write.SINGLE_COLUMN;
-		else if (args[5].equalsIgnoreCase("multiple"))
-			writeType = Write.MULTIPLE_COLUMNS;
+		Write writeType = null;
+		if (args[5].equalsIgnoreCase("put_to_single_column"))
+			writeType = Write.PUT_TO_SINGLE_COLUMN;
+		else if (args[5].equalsIgnoreCase("put_to_multiple_columns"))
+			writeType = Write.PUT_TO_MULTIPLE_COLUMNS;
 		else {
 			System.err.println("invalid write type: " + args[5]);
 			System.exit(1);

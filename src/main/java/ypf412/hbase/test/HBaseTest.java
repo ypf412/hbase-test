@@ -10,6 +10,8 @@ import ypf412.hbase.test.table.CreateTable;
 import ypf412.hbase.test.table.DropTable;
 
 /**
+ * Main Class
+ * 
  * @author jiuling.ypf
  * 
  */
@@ -19,8 +21,6 @@ public class HBaseTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
 		if (args.length < 2) {
 			System.out
 					.println("Invalid number of parameters: must be >= 2 parameters!");
@@ -48,7 +48,7 @@ public class HBaseTest {
 		}
 
 		String operation = args[0];
-		if (operation.equalsIgnoreCase("createTable")) { // 创建表
+		if (operation.equalsIgnoreCase("createTable")) {
 			CreateTable createTable = new CreateTable(admin);
 			if (args.length != 4) {
 				System.out
@@ -59,7 +59,7 @@ public class HBaseTest {
 			String columnFamily = args[2];
 			short preRegionNumber = Short.parseShort(args[3]);
 			createTable.doWork(tableName, columnFamily, preRegionNumber);
-		} else if (operation.equalsIgnoreCase("dropTable")) { // 删除表
+		} else if (operation.equalsIgnoreCase("dropTable")) {
 			DropTable dropTable = new DropTable(admin);
 			if (args.length != 2) {
 				System.out
@@ -70,7 +70,7 @@ public class HBaseTest {
 			dropTable.doWork(tableName);
 		} else if (operation.equalsIgnoreCase("***")) {
 
-		} else { // 非法操作
+		} else {
 			System.err.println("Invalid operation: " + operation
 					+ ", terminate program");
 		}

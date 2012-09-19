@@ -11,7 +11,7 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 
 /**
- * 删除测试用HBase表
+ * Drop HBase Table for Testing
  * 
  * @author jiuling.ypf
  * 

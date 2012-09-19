@@ -16,7 +16,7 @@ import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.regionserver.StoreFile.BloomType;
 
 /**
- * 创建测试用HBase表
+ * Create HBase Table for Testing
  * 
  * @author jiuling.ypf
  * 
@@ -47,30 +47,27 @@ public class CreateTable {
 		try {
 
 			HColumnDescriptor disc = new HColumnDescriptor(columnFamily);
-			disc.setMaxVersions(1);
+			disc.setMaxVersions(1); // 设置最大版本数
 			disc.setCompressionType(Algorithm.LZO); // 设置LZO压缩存储，减少磁盘IO开销，对读写性能都能有所提高
 			disc.setBloomFilterType(BloomType.ROW); // 设置按行方式的BloomFilter，加快rowkey的检索过程
 			disc.setDataBlockEncoding(DataBlockEncoding.DIFF); // 设置前缀压缩，减少内存开销
-			disc.setTimeToLive(24 * 60 * 60); // 设置一天有效时间
-			disc.setInMemory(true);
+			disc.setTimeToLive(24 * 60 * 60); // 设置有效时间
+			disc.setInMemory(true); // 设置内存表
 
 			des = new HTableDescriptor(tableName);
 			des.addFamily(disc);
 
-			byte[][] splits = new byte[preRegionNumber][];
-			for (short s = 0; s < preRegionNumber; s++) {
-				byte[] split = { (byte) s };
-				splits[s] = split;
-			}
+			byte[] startKey = { (byte)0x00 };
+			byte[] endKey = { (byte)0xff } ;
 
 			if (!admin.tableExists(des.getNameAsString())) { // 不存在则直接创建
-				admin.createTable(des, splits);
+				admin.createTable(des, startKey, endKey, preRegionNumber);
 				LOG.info("create table: " + des.getNameAsString()
 						+ " sucessfully");
 			} else { // 存在则重新创建
 				admin.disableTable(des.getNameAsString());
 				admin.deleteTable(des.getNameAsString());
-				admin.createTable(des, splits);
+				admin.createTable(des, startKey, endKey, preRegionNumber);
 				LOG.info("table: " + des.getNameAsString()
 						+ " already exists, delete and recreate it");
 
