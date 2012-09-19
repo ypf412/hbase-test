@@ -57,7 +57,7 @@ public class CreateTable {
 			des = new HTableDescriptor(tableName);
 			des.addFamily(disc);
 
-			byte[] startKey = { (byte)0x00 };
+			byte[] startKey = { (byte)0x01 };
 			byte[] endKey = { (byte)0xff } ;
 
 			if (!admin.tableExists(des.getNameAsString())) { // 不存在则直接创建
