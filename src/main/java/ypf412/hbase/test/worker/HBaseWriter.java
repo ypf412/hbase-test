@@ -47,7 +47,9 @@ public class HBaseWriter {
 	
 	private boolean autoFlush;
 	
-	public HBaseWriter(String dataDir, String fieldSpliter, int threadNum, String tableName, String columnFamily, Write writeType, boolean autoFlush) {
+	private boolean openWal;
+	
+	public HBaseWriter(String dataDir, String fieldSpliter, int threadNum, String tableName, String columnFamily, Write writeType, boolean autoFlush, boolean openWal) {
 		this.dataDir = dataDir;
 		this.fieldSpliter = fieldSpliter;
 		this.threadNum = threadNum;
@@ -55,6 +57,7 @@ public class HBaseWriter {
 		this.columnFamily = columnFamily;
 		this.writeType = writeType;
 		this.autoFlush = autoFlush;
+		this.openWal = openWal;
 		
 		initHTables();
 	}
@@ -240,6 +243,7 @@ public class HBaseWriter {
 			counter.addFieldNum(1);
 			Put put = new Put(rowKey);
 			put.add(Bytes.toBytes(columnFamily), Bytes.toBytes("col"), Bytes.toBytes(line));
+			put.setWriteToWAL(openWal);
 			return put;
 		}
 
@@ -250,6 +254,7 @@ public class HBaseWriter {
 			for (int i = 0; i < data.length; i++) {
 				put.add(Bytes.toBytes(columnFamily), Bytes.toBytes("col" + i), Bytes.toBytes(data[i]));
 			}
+			put.setWriteToWAL(openWal);
 			return put;
 		}
 		
@@ -371,9 +376,9 @@ public class HBaseWriter {
 	 * @param args
 	 */
 	public static void main(String args[]) {
-		if (args.length != 7) {
+		if (args.length != 8) {
 			System.err
-					.println("Usage: ypf412.hbase.test.worker.HBaseWriter [dataDir] [fieldSpliter] [threadNum] [tableName] [columnFamily] [writeType(put_to_single_column|put_to_multiple_columns)] [autoFlush(true|flase)]");
+					.println("Usage: ypf412.hbase.test.worker.HBaseWriter [dataDir] [fieldSpliter] [threadNum] [tableName] [columnFamily] [writeType(put_to_single_column|put_to_multiple_columns)] [autoFlush(true|flase)] [WAL(true|false)]");
 			System.exit(1);
 		}
 		String dataDir = args[0];
@@ -397,7 +402,14 @@ public class HBaseWriter {
 			System.err.println("invalid auto flush: " + args[6]);
 			System.exit(1);
 		}
-		HBaseWriter writer = new HBaseWriter(dataDir, fieldSpliter, threadNum, tableName, columnFamily, writeType, autoFlush);
+		boolean openWal = true;
+		if (args[7].equalsIgnoreCase("true") || args[7].equalsIgnoreCase("false"))
+			autoFlush = Boolean.parseBoolean(args[7]);
+		else {
+			System.err.println("invalid wal: " + args[7]);
+			System.exit(1);
+		}
+		HBaseWriter writer = new HBaseWriter(dataDir, fieldSpliter, threadNum, tableName, columnFamily, writeType, autoFlush, openWal);
 		writer.startWorkers();	
 	}
 	
