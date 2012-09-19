@@ -181,7 +181,6 @@ public class HBaseReader {
 		}
 
 		private void scanFromHBaseDB(int shardNum, File file, Read readType) {
-			long start = System.currentTimeMillis();
 			Scan scan = new Scan();
 			if (readType == Read.SCAN_BY_COLUMN_FAMILY)
 				scan.addFamily(Bytes.toBytes(columnFamily));
@@ -205,6 +204,7 @@ public class HBaseReader {
 			scan.setStartRow(startRow);
 			scan.setStopRow(stopRow);
 			ResultScanner rs = null;
+			long start = System.currentTimeMillis();
 			try {
 				rs = hTables[shardNum].getScanner(scan);
 			} catch (IOException e) {
@@ -212,6 +212,7 @@ public class HBaseReader {
 			}
 			Result rr = new Result();
 			while (rr != null) {
+				start = System.currentTimeMillis();
 				try {
 					rr = rs.next();
 				} catch (IOException e) {
@@ -253,6 +254,7 @@ public class HBaseReader {
 						}
 					}
 				}
+				start = System.currentTimeMillis();
 				try {
 					Result result = hTables[shardNum].get(get);
 					if (result != null && !result.isEmpty())
