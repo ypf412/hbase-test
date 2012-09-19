@@ -105,6 +105,8 @@ public class HBaseWriter {
 			LOG.error("worker thread is interrupted", e);
 		}
 		
+		closeHTables();
+		
 		printStat(counter);
 		
 		LOG.info("---------- HBase writer finish to work ----------");
@@ -131,6 +133,16 @@ public class HBaseWriter {
 		
 		System.out.println("======>all threads: ");
 		result.printStat();
+	}
+	
+	private void closeHTables() {
+		try {
+			for (int i = 0; i < threadNum; i++) {
+				hTables[i].close();
+			}
+		} catch (IOException e) {
+			LOG.error("closeHTables error, e=" + e.getStackTrace());
+		}
 	}
 	
 	/**

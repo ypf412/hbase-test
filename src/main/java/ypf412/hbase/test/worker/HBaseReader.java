@@ -94,6 +94,8 @@ public class HBaseReader {
 			LOG.error("worker thread is interrupted", e);
 		}
 		
+		closeHTables();
+		
 		printStat(counter);
 		
 		LOG.info("---------- HBase reader finish to work ----------");
@@ -124,6 +126,16 @@ public class HBaseReader {
 		
 		System.out.println("======>all threads: ");
 		result.printStat();
+	}
+	
+	private void closeHTables() {
+		try {
+			for (int i = 0; i < threadNum; i++) {
+				hTables[i].close();
+			}
+		} catch (IOException e) {
+			LOG.error("closeHTables error, e=" + e.getStackTrace());
+		}
 	}
 	
 	private class ShardRead implements Runnable {
