@@ -108,6 +108,7 @@ public class HBaseWriter {
 	private void printStat(Counter[] counter) {
 		Counter result = new Counter();
 		for (int shard = 0; shard < threadNum; shard++) {
+			System.out.println("======>thread: " + shard);
 			counter[shard].printStat();
 			result.countA += counter[shard].countA;
 			result.countB += counter[shard].countB;
@@ -123,9 +124,8 @@ public class HBaseWriter {
 			result.countFailure += counter[shard].countFailure;
 		}
 		
-		LOG.info("----------------------- stat report of all threads ---------------------------------");
+		System.out.println("======>all threads: ");
 		result.printStat();
-		LOG.info("----------------------- stat report of all threads ---------------------------------");
 	}
 	
 	/**
@@ -337,7 +337,9 @@ public class HBaseWriter {
 			System.out.println("countSuccess = " + countSuccess + ", countFailure = " + countFailure);
 			System.out.println("totalKeyLen = " + totalKeyLen + ", totalValLen = " + totalValLen);
 			if(totalRecord != 0) {
-				System.out.println("average time per line = " + (totalTime / totalRecord));
+				System.out.println("average time per line = " + ((double)totalTime / (double)totalRecord));
+				System.out.println("average tps = "
+						+ ((double)(totalRecord * 1000) / (double)totalTime));
 				System.out.println("average len per key = " + (totalKeyLen / totalRecord));
 				System.out.println("average len per val = " + (totalValLen / totalRecord));
 				System.out.println("average field per line = " + (totalFieldNum / totalRecord));

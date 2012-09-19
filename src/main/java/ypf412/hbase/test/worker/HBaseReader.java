@@ -102,6 +102,7 @@ public class HBaseReader {
 	private void printStat(Counter[] counter) {
 		Counter result = new Counter();
 		for (int shard = 0; shard < threadNum; shard++) {
+			System.out.println("======>thread: " + shard);
 			counter[shard].printStat();
 			result.countA += counter[shard].countA;
 			result.countB += counter[shard].countB;
@@ -121,9 +122,8 @@ public class HBaseReader {
 			result.countNull += counter[shard].countNull;
 		}
 		
-		LOG.info("----------------------- stat report of all threads ---------------------------------");
+		System.out.println("======>all threads: ");
 		result.printStat();
-		LOG.info("----------------------- stat report of all threads ---------------------------------");
 	}
 	
 	private class ShardRead implements Runnable {
@@ -364,7 +364,9 @@ public class HBaseReader {
 			System.out.println("totalRecord = " + totalRecord + ", totalTime = " + totalTime + ", hit = " + countSuccess);
 			if(totalRecord != 0){
 				System.out.println("average time per line = "
-						+ (totalTime / totalRecord));	
+						+ ((double)totalTime / (double)totalRecord));
+				System.out.println("average qps = "
+						+ ((double)(totalRecord * 1000) / (double)totalTime));
 			}
 			System.out.println("< 1ms = " + countA + ", 1~2 ms = " + countB
 					+ ", 2~10 ms = " + countC + ", 10~20ms = " + countD + ", > 20ms = " + countE);
@@ -374,7 +376,9 @@ public class HBaseReader {
 			System.out.println("totalRecord = " + totalRecordN + ", totalTime = " + totalTimeN + ", hit = " + countNull);
 			if(totalRecordN != 0){
 				System.out.println("average time per line = "
-						+ (totalTimeN / totalRecordN));
+						+ ((double)totalTimeN / (double)totalRecordN));
+				System.out.println("average qps = "
+						+ ((double)(totalRecordN * 1000) / (double)totalTimeN));
 			}
 			System.out.println("< 1ms = " + countAN + ", 1~2 ms = " + countBN
 					+ ", 2~10 ms = " + countCN + ", 10~20ms = " + countDN + ", > 20ms = " + countEN);
