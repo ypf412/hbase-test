@@ -404,9 +404,9 @@ public class HBaseWriter {
 		}
 		boolean openWal = true;
 		if (args[7].equalsIgnoreCase("true") || args[7].equalsIgnoreCase("false"))
-			autoFlush = Boolean.parseBoolean(args[7]);
+			openWal = Boolean.parseBoolean(args[7]);
 		else {
-			System.err.println("invalid wal: " + args[7]);
+			System.err.println("invalid wal flag: " + args[7]);
 			System.exit(1);
 		}
 		HBaseWriter writer = new HBaseWriter(dataDir, fieldSpliter, threadNum, tableName, columnFamily, writeType, autoFlush, openWal);
