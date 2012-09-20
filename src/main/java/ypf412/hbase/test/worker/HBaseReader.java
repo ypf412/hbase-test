@@ -226,7 +226,7 @@ public class HBaseReader {
 		}
 
 		private byte[] getRowKeyForGet(int shardNum, File file) {
-			int lineNum = rand.nextInt();
+			int lineNum = rand.nextInt(10000);
 			byte[] bShard = { (byte)shardNum };
 			byte[] bFile = Bytes.toBytes(file.getAbsolutePath());
 			byte[] bLine = Bytes.toBytes(lineNum);
