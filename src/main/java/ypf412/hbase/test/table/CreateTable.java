@@ -52,7 +52,6 @@ public class CreateTable {
 			disc.setBloomFilterType(BloomType.ROW); // 设置按行方式的BloomFilter，加快rowkey的检索过程
 			disc.setDataBlockEncoding(DataBlockEncoding.DIFF); // 设置前缀压缩，减少内存开销
 			disc.setTimeToLive(24 * 60 * 60); // 设置有效时间
-			disc.setInMemory(true); // 设置内存表
 
 			des = new HTableDescriptor(tableName);
 			des.addFamily(disc);
