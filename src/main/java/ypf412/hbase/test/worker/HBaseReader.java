@@ -226,7 +226,7 @@ public class HBaseReader {
 		}
 
 		private byte[] getRowKeyForGet(int shardNum, File file) {
-			int lineNum = rand.nextInt(10000);
+			int lineNum = rand.nextInt(250000);
 			byte[] bShard = { (byte)shardNum };
 			byte[] bFile = Bytes.toBytes(file.getAbsolutePath());
 			byte[] bLine = Bytes.toBytes(lineNum);
@@ -235,7 +235,7 @@ public class HBaseReader {
 		}
 		
 		private void getFromHBaseDB(int shardNum, File file, Read readType) {
-			final int lineNumPerFile = 100000;
+			final int lineNumPerFile = 200000;
 			long start = System.currentTimeMillis();
 			for (int i = 0; i < lineNumPerFile; i++) {
 				byte[] rowKey = getRowKeyForGet(shardNum, file);
@@ -246,7 +246,7 @@ public class HBaseReader {
 					List<String> columnList = new ArrayList<String>();
 					int j = 0;
 					while(j < 10) {
-						String columnName = "col" + rand.nextInt(30);
+						String columnName = "col" + rand.nextInt(50);
 						if (!columnList.contains(columnName)) {
 							get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(columnName));
 							columnList.add(columnName);
