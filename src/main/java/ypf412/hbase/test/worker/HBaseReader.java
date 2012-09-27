@@ -119,7 +119,7 @@ public class HBaseReader {
 			result.totalRecord += counter[shard].totalRecord;
 			result.totalTime += counter[shard].totalTime;
 			result.totalRecordN += counter[shard].totalRecordN;
-			result.totalTimeN += counter[shard].totalRecordN;
+			result.totalTimeN += counter[shard].totalTimeN;
 			result.countSuccess += counter[shard].countSuccess;
 			result.countNull += counter[shard].countNull;
 		}
