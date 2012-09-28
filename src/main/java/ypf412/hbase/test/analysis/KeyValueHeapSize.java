@@ -10,7 +10,7 @@ public class KeyValueHeapSize {
 	public static void main(String[] args) {
 		
 		// single column KeyValue size
-		byte[] row = new byte[53]; // test row length
+		byte[] row = new byte[64]; // test row length
 		byte[] family = new byte[1]; // test family length
 	    byte[] qualifier = new byte[4]; // test qualifier length
 	    long timestamp = 123456L; // ts

@@ -9,7 +9,7 @@ public class PutHeapSize {
 	 */
 	public static void main(String[] args) {
 		// single column Put size
-		byte[] rowKey = new byte[53];
+		byte[] rowKey = new byte[64];
 		byte[] value = new byte[751];
 		Put singleColumnPut = new Put(rowKey);
 		singleColumnPut.add(Bytes.toBytes("t"), Bytes.toBytes("col"), value);
